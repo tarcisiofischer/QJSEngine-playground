@@ -46,15 +46,13 @@ int main(int argc, char *argv[])
         std::cout << "Elapsed time: " << elapsed << " ms" << std::endl;
     }
 
-    // Is it cheap to send simple variables and get return values? (Loop below takes ~2s with 100000 iterations)
+    // Is it cheap to send simple variables and get return values? (Loop below takes 63ms with 100000 iterations)
     {
         auto start = std::chrono::steady_clock::now();
         QJSEngine engine;
-        engine.importModule("test2.js");
+        auto m = engine.importModule("test2.js");
         for (auto i = 0; i < 100000; ++i) {
-            auto r = engine.evaluate(QString{"some_f(%1)"}.arg(QString::fromStdString(std::to_string(i)))).toNumber();
-            // Avoiding the QString instantiation didn't change the performance. Compiled in release.
-            //auto r = engine.evaluate("some_f(42)").toNumber();
+            auto r = m.property("some_f").call({i}).toNumber();
             (void) r;
         }
         auto end = std::chrono::steady_clock::now();
