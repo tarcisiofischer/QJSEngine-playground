@@ -1,12 +1,36 @@
+#include "myjsfunc.h"
+
 #include <QCoreApplication>
 #include <QJSEngine>
+#include <QDebug>
 
 #include <iostream>
 #include <chrono>
 
+QJSValue MyJsFunction::f()
+{
+    return 42;
+}
+
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
+
+    // Is it possible to call C++ from js?
+    {
+        QJSEngine engine;
+        QJSValue myJsFunc = engine.newQObject(new MyJsFunction{});
+        engine.globalObject().setProperty("MyPkg", myJsFunc);
+        engine.installExtensions(QJSEngine::ConsoleExtension);
+        auto m = engine.importModule("test3.js");
+        auto r = m.property("do_run").call({"test1.js"});
+        if (r.isError()) {
+            qDebug()
+                    << "Uncaught exception at line"
+                    << r.property("lineNumber").toInt()
+                    << ":" << r.toString();
+        }
+    }
 
     // Is it cheap to initialize the engine? (Loop below takes 63ms)
     {
